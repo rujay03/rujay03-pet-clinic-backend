@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: pet_clinic
+
+  datasource:
+    # Replace 'pet_clinic' with your actual database name if different
+    url: jdbc:mysql://localhost:3306/ruwanthi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      # 'update' will create/update tables based on your Java entities
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
