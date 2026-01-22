@@ -1,0 +1,17 @@
+Step-by-step order (so you don’t get stuck)
+
+Flyway migration for tables + seed roles (you already have SQL → we adapt to Flyway)
+
+Add Redis + Spring Session dependencies and config
+
+Create entities + repositories: User, Role, UserRole, PetOwner
+
+Create Spring Security config (session-based)
+
+Build /signup
+
+Build /login + /me + /logout
+
+Test everything in Postman
+
+Add simple HTML pages
