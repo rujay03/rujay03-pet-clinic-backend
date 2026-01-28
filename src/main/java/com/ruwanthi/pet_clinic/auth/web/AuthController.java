@@ -148,24 +148,34 @@ public class AuthController {
                                    HttpServletRequest httpRequest,
                                    HttpServletResponse httpResponse) {
 
-        // 1) authenticate using AuthService
-        Authentication authentication = authService.login(
-                request.getEmail(),
-                request.getPassword()
-        );
+        try {
+            // 1) authenticate using AuthService
+            Authentication authentication = authService.login(
+                    request.getEmail(),
+                    request.getPassword()
+            );
 
-        // 2) create a SecurityContext and set the Authentication
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
+            // 2) create a SecurityContext and set the Authentication
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
 
-        // 3) save context to session via SecurityContextRepository
-        securityContextRepository.saveContext(context, httpRequest, httpResponse);
+            // 3) save context to session via SecurityContextRepository
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
-        // 4) ensure session is created (should already happen, but safe)
-        httpRequest.getSession(true);
+            // 4) ensure session is created (should already happen, but safe)
+            httpRequest.getSession(true);
 
-        return ResponseEntity.ok("Login successful");
+            return ResponseEntity.ok("Login successful");
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(401).body("Invalid email or password");
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            return ResponseEntity.status(401).body("Account is disabled");
+        } catch (org.springframework.security.authentication.LockedException e) {
+            return ResponseEntity.status(401).body("Account is locked");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("An error occurred during login");
+        }
     }
 
     @PostMapping("/logout")
