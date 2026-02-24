@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/ruwanthi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/petclinic?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: hirushan
+    password: ru123@jay
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
