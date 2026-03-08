@@ -41,13 +41,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
-                        // Temporary: Allow unauthenticated access to pet owner features
-                        .requestMatchers("/api/owner/**").permitAll()
-                        .requestMatchers("/api/pet-owner/**").permitAll()
-                        .requestMatchers("/api/dashboard/**").permitAll()
-                        .requestMatchers("/api/appointments/**").permitAll()
-                        .requestMatchers("/api/records/**").permitAll()
-                        .requestMatchers("/api/pets/**").permitAll()
+                        // Protected endpoints - require authentication
+                        .requestMatchers("/api/pets/**").authenticated()
+                        .requestMatchers("/api/owner/**").authenticated()
+                        .requestMatchers("/api/pet-owner/**").authenticated()
+                        .requestMatchers("/api/dashboard/**").authenticated()
+                        .requestMatchers("/api/appointments/**").authenticated()
+                        .requestMatchers("/api/records/**").authenticated()
                         .anyRequest().authenticated()
                 );
 
