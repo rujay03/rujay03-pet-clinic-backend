@@ -1,0 +1,126 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.ruwanthi:pet_clinic >-----------------------
+[INFO] Building pet_clinic 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:4.0.1:run (default-cli) > test-compile @ pet_clinic >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ pet_clinic ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ pet_clinic ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ pet_clinic ---
+[INFO] skip non existing resourceDirectory C:\OTHER\University\uni 2.2\SDP final\rujay03-pet-clinic-backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ pet_clinic ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:4.0.1:run (default-cli) < test-compile @ pet_clinic <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.0.1:run (default-cli) @ pet_clinic ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.1)
+
+2026-03-08T11:39:38.924+05:30  INFO 8664 --- [pet_clinic] [           main] c.r.pet_clinic.PetClinicApplication      : Starting PetClinicApplication using Java 24.0.1 with PID 8664 (C:\OTHER\University\uni 2.2\SDP final\rujay03-pet-clinic-backend\target\classes started by ruwan in C:\OTHER\University\uni 2.2\SDP final\rujay03-pet-clinic-backend)
+2026-03-08T11:39:38.928+05:30  INFO 8664 --- [pet_clinic] [           main] c.r.pet_clinic.PetClinicApplication      : The following 1 profile is active: "dev"
+2026-03-08T11:39:39.670+05:30  INFO 8664 --- [pet_clinic] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-08T11:39:39.671+05:30  INFO 8664 --- [pet_clinic] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-08T11:39:39.807+05:30  INFO 8664 --- [pet_clinic] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 128 ms. Found 7 JPA repository interfaces.
+2026-03-08T11:39:39.845+05:30  INFO 8664 --- [pet_clinic] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-08T11:39:39.846+05:30  INFO 8664 --- [pet_clinic] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-03-08T11:39:39.877+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.appointment.repo.AppointmentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.auth.repo.OtpVerificationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.owner.repo.OwnerRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.pet.repo.PetRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.staff.repo.StaffRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.user.repo.RoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.ruwanthi.pet_clinic.user.repo.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-08T11:39:39.878+05:30  INFO 8664 --- [pet_clinic] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 12 ms. Found 0 Redis repository interfaces.
+2026-03-08T11:39:40.393+05:30  INFO 8664 --- [pet_clinic] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8081 (http)
+2026-03-08T11:39:40.403+05:30  INFO 8664 --- [pet_clinic] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-08T11:39:40.404+05:30  INFO 8664 --- [pet_clinic] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]
+2026-03-08T11:39:40.451+05:30  INFO 8664 --- [pet_clinic] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1471 ms
+2026-03-08T11:39:40.786+05:30  INFO 8664 --- [pet_clinic] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-08T11:39:40.918+05:30  INFO 8664 --- [pet_clinic] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@77cc6a28
+2026-03-08T11:39:40.920+05:30  INFO 8664 --- [pet_clinic] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-08T11:39:40.956+05:30  INFO 8664 --- [pet_clinic] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:3306/petclinic?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true (MySQL 9.5)
+2026-03-08T11:39:40.966+05:30  WARN 8664 --- [pet_clinic] [           main] o.f.c.internal.database.base.Database    : Using MySQL 9.5 which is newer than the version Flyway has been verified with. The latest verified version of MySQL is 8.1.
+2026-03-08T11:39:40.995+05:30  INFO 8664 --- [pet_clinic] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Repair of failed migration in Schema History table `petclinic`.`flyway_schema_history` not necessary. No failed migration detected.
+2026-03-08T11:39:41.013+05:30  INFO 8664 --- [pet_clinic] [           main] o.f.core.internal.command.DbRepair       : Successfully repaired schema history table `petclinic`.`flyway_schema_history` (execution time 00:00.034s).
+2026-03-08T11:39:41.032+05:30  WARN 8664 --- [pet_clinic] [           main] o.f.c.internal.database.base.Database    : Using MySQL 9.5 which is newer than the version Flyway has been verified with. The latest verified version of MySQL is 8.1.
+2026-03-08T11:39:41.052+05:30  INFO 8664 --- [pet_clinic] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `petclinic`: 5
+2026-03-08T11:39:41.056+05:30  INFO 8664 --- [pet_clinic] [           main] o.f.core.internal.command.DbMigrate      : Schema `petclinic` is up to date. No migration necessary.
+2026-03-08T11:39:41.119+05:30  INFO 8664 --- [pet_clinic] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-08T11:39:41.162+05:30  INFO 8664 --- [pet_clinic] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.0.Final
+2026-03-08T11:39:41.809+05:30  INFO 8664 --- [pet_clinic] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-08T11:39:41.890+05:30  WARN 8664 --- [pet_clinic] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-08T11:39:41.912+05:30  INFO 8664 --- [pet_clinic] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/petclinic?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.5
+	Default catalog/schema: petclinic/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-08T11:39:43.519+05:30  INFO 8664 --- [pet_clinic] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: alter table users modify column status enum ('ACTIVE','INACTIVE','SUSPENDED') not null
+2026-03-08T11:39:43.646+05:30  INFO 8664 --- [pet_clinic] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-08T11:39:43.781+05:30  INFO 8664 --- [pet_clinic] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-08T11:39:45.210+05:30  INFO 8664 --- [pet_clinic] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsServiceImpl
+2026-03-08T11:39:45.379+05:30  WARN 8664 --- [pet_clinic] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by io.netty.util.internal.PlatformDependent0$2 (file:/C:/Users/ruwan/.m2/repository/io/netty/netty-common/4.2.9.Final/netty-common-4.2.9.Final.jar)
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$2
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+2026-03-08T11:39:46.802+05:30  WARN 8664 --- [pet_clinic] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-03-08T11:39:46.822+05:30  INFO 8664 --- [pet_clinic] [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-08T11:39:46.822+05:30  INFO 8664 --- [pet_clinic] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-08T11:39:46.833+05:30  INFO 8664 --- [pet_clinic] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-08T11:39:46.849+05:30  INFO 8664 --- [pet_clinic] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-03-08T11:39:46.873+05:30 ERROR 8664 --- [pet_clinic] [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8081 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8081 or configure this application to listen on another port.
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  11.243 s
+[INFO] Finished at: 2026-03-08T11:39:47+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:4.0.1:run (default-cli) on project pet_clinic: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
