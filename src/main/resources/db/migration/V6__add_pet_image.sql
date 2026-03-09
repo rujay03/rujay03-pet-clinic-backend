@@ -1,0 +1,2 @@
+ALTER TABLE pet ADD COLUMN image_url VARCHAR(500) NULL;
+
