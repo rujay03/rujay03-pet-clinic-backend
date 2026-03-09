@@ -5,6 +5,12 @@ spring:
     password: ru123@jay
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -50,3 +56,6 @@ spring:
             fallback: false
     protocol: smtps
 
+app:
+  upload:
+    dir: uploads/pet-images

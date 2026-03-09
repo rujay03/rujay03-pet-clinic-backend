@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
+                        .requestMatchers(HttpMethod.GET, "/api/pets/images/**").permitAll() // pet images public
                         // Protected endpoints - require authentication
                         .requestMatchers("/api/pets/**").authenticated()
                         .requestMatchers("/api/owner/**").authenticated()

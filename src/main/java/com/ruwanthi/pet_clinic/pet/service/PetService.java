@@ -21,10 +21,12 @@ public class PetService {
 
     private final PetRepository petRepository;
     private final OwnerRepository ownerRepository;
+    private final PetImageService petImageService;
 
-    public PetService(PetRepository petRepository, OwnerRepository ownerRepository) {
+    public PetService(PetRepository petRepository, OwnerRepository ownerRepository, PetImageService petImageService) {
         this.petRepository = petRepository;
         this.ownerRepository = ownerRepository;
+        this.petImageService = petImageService;
     }
 
     /**
@@ -64,7 +66,7 @@ public class PetService {
      * Create a new pet
      */
     @Transactional
-    public PetResponse createPet(CreatePetRequest request, User user) {
+    public PetResponse createPet(CreatePetRequest request, User user, String imageUrl) {
         Owner owner = ownerRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException("Owner profile not found"));
 
@@ -89,6 +91,7 @@ public class PetService {
                 .sex(sex)
                 .dateOfBirth(request.getDateOfBirth())
                 .notes(request.getNotes())
+                .imageUrl(imageUrl)
                 .build();
 
         pet = petRepository.save(pet);
@@ -99,7 +102,7 @@ public class PetService {
      * Update an existing pet
      */
     @Transactional
-    public PetResponse updatePet(Long petId, UpdatePetRequest request, User user) {
+    public PetResponse updatePet(Long petId, UpdatePetRequest request, User user, String newImageUrl) {
         Owner owner = ownerRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException("Owner profile not found"));
 
@@ -133,6 +136,18 @@ public class PetService {
         pet.setDateOfBirth(request.getDateOfBirth());
         pet.setNotes(request.getNotes());
 
+        // Handle image update
+        if (newImageUrl != null) {
+            // Delete old image if it exists
+            if (pet.getImageUrl() != null) {
+                String oldFilename = pet.getImageUrl().substring(pet.getImageUrl().lastIndexOf("/") + 1);
+                petImageService.deleteImage(oldFilename);
+            }
+            // Set new image URL (empty string means remove image)
+            pet.setImageUrl(newImageUrl.isEmpty() ? null : newImageUrl);
+        }
+        // if newImageUrl is null, keep existing image
+
         pet = petRepository.save(pet);
         return mapToResponse(pet);
     }
@@ -153,6 +168,12 @@ public class PetService {
             throw new IllegalArgumentException("You don't have permission to delete this pet");
         }
 
+        // Delete associated image file if exists
+        if (pet.getImageUrl() != null) {
+            String filename = pet.getImageUrl().substring(pet.getImageUrl().lastIndexOf("/") + 1);
+            petImageService.deleteImage(filename);
+        }
+
         petRepository.delete(pet);
     }
 
@@ -168,6 +189,7 @@ public class PetService {
         response.setSex(pet.getSex().name());
         response.setDateOfBirth(pet.getDateOfBirth());
         response.setNotes(pet.getNotes());
+        response.setImageUrl(pet.getImageUrl());
         response.setCreatedAt(pet.getCreatedAt());
 
         // Calculate age if date of birth is available

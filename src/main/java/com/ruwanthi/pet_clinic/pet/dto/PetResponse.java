@@ -13,6 +13,7 @@ public class PetResponse {
     private LocalDate dateOfBirth;
     private Integer age; // Calculated age in years
     private String notes;
+    private String imageUrl;
     private LocalDateTime createdAt;
 
     // Getters and Setters
@@ -78,6 +79,14 @@ public class PetResponse {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public LocalDateTime getCreatedAt() {
