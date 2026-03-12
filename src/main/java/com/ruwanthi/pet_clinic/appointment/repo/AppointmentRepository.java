@@ -21,3 +21,4 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     Optional<Appointment> findByIdAndOwnerId(@Param("id") Long id, @Param("ownerId") Long ownerId);
 }
 
+
