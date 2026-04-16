@@ -1,9 +1,11 @@
 package com.ruwanthi.pet_clinic.auth.web;
 
+import com.ruwanthi.pet_clinic.auth.dto.ForgotPasswordRequest;
 import com.ruwanthi.pet_clinic.auth.dto.LoginRequest;
 import com.ruwanthi.pet_clinic.auth.dto.MeResponse;
 import com.ruwanthi.pet_clinic.auth.dto.PetOwnerSignupRequest;
 import com.ruwanthi.pet_clinic.auth.dto.ResendOtpRequest;
+import com.ruwanthi.pet_clinic.auth.dto.ResetPasswordRequest;
 import com.ruwanthi.pet_clinic.auth.dto.SignupRequest;
 import com.ruwanthi.pet_clinic.auth.dto.StaffSignupRequest;
 import com.ruwanthi.pet_clinic.auth.dto.VerifyOtpRequest;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final String OTP_MAIL_FAILURE_MSG = "Unable to send OTP email";
 
     private final AuthService authService;
     private final SecurityContextRepository securityContextRepository;
@@ -57,6 +61,11 @@ public class AuthController {
             return ResponseEntity.ok("OTP sent to your email. Please verify to complete registration.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            if (isOtpMailTransportFailure(e)) {
+                return ResponseEntity.ok("OTP generated. Email delivery is unavailable right now; check server logs for the OTP code.");
+            }
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -70,6 +79,11 @@ public class AuthController {
             authService.registerStaff(request);
             return ResponseEntity.ok("OTP sent to your email. Please verify to complete registration.");
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            if (isOtpMailTransportFailure(e)) {
+                return ResponseEntity.ok("OTP generated. Email delivery is unavailable right now; check server logs for the OTP code.");
+            }
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -95,6 +109,11 @@ public class AuthController {
         try {
             otpService.generateAndSendOtp(request.getEmail());
             return ResponseEntity.ok("OTP resent to your email");
+        } catch (IllegalStateException e) {
+            if (isOtpMailTransportFailure(e)) {
+                return ResponseEntity.ok("OTP regenerated. Email delivery is unavailable right now; check server logs for the OTP code.");
+            }
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -186,6 +205,27 @@ public class AuthController {
         }
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok("Logged out");
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request.getEmail());
+        // Always return success to avoid leaking whether an account exists.
+        return ResponseEntity.ok("If an account exists for that email, an OTP has been sent.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            authService.resetPassword(request.getEmail(), request.getOtpCode(), request.getNewPassword());
+            return ResponseEntity.ok("Password reset successful. Please login with your new password.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private boolean isOtpMailTransportFailure(Exception e) {
+        return e.getMessage() != null && e.getMessage().contains(OTP_MAIL_FAILURE_MSG);
     }
 
 

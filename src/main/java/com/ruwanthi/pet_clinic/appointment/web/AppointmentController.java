@@ -1,15 +1,20 @@
 package com.ruwanthi.pet_clinic.appointment.web;
 import com.ruwanthi.pet_clinic.appointment.dto.AppointmentResponse;
 import com.ruwanthi.pet_clinic.appointment.dto.CreateAppointmentRequest;
+import com.ruwanthi.pet_clinic.appointment.dto.DoctorAppointmentItemResponse;
+import com.ruwanthi.pet_clinic.appointment.dto.DoctorAppointmentPageResponse;
+import com.ruwanthi.pet_clinic.appointment.dto.UpdateAppointmentStatusRequest;
 import com.ruwanthi.pet_clinic.appointment.service.AppointmentService;
 import com.ruwanthi.pet_clinic.user.entity.User;
 import com.ruwanthi.pet_clinic.user.repo.UserRepository;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 @RestController
@@ -55,6 +60,36 @@ public class AppointmentController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to cancel appointment"));
+        }
+    }
+    /** Get all appointments for the logged-in doctor */
+    @GetMapping("/doctor/my")
+    public ResponseEntity<DoctorAppointmentPageResponse> getDoctorAppointments(
+            @RequestParam(defaultValue = "ALL") String tab,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        User user = getCurrentUser();
+        DoctorAppointmentPageResponse response = appointmentService.getDoctorAppointments(user, tab, search, date, page, size);
+        return ResponseEntity.ok(response);
+    }
+    /** Update the status of a doctor's appointment */
+    @PatchMapping("/doctor/{id}/status")
+    public ResponseEntity<?> updateDoctorAppointmentStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateAppointmentStatusRequest request
+    ) {
+        try {
+            User user = getCurrentUser();
+            DoctorAppointmentItemResponse response = appointmentService.updateDoctorAppointmentStatus(id, request.getStatus(), user);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to update appointment status"));
         }
     }
     private User getCurrentUser() {

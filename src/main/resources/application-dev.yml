@@ -57,5 +57,8 @@ spring:
     protocol: smtps
 
 app:
+  mail:
+    mock-enabled: true
+    fail-on-error: false
   upload:
     dir: uploads/pet-images

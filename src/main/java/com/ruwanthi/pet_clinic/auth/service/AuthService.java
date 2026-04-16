@@ -214,6 +214,27 @@ public class AuthService {
         );
     }
 
+    @Transactional
+    public void requestPasswordReset(String email) {
+        userRepository.findByEmail(email).ifPresent(user ->
+                otpService.generateAndSendPasswordResetOtp(user.getEmail())
+        );
+    }
 
+    @Transactional
+    public void resetPassword(String email, String otpCode, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 100) {
+            throw new IllegalArgumentException("Password must be between 6 and 100 characters");
+        }
+
+        otpService.verifyOtp(email, otpCode);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid password reset request"));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        otpService.deleteOtp(email);
+    }
 
 }

@@ -74,7 +74,6 @@ public class Appointment {
     }
 
     public enum AppointmentStatus {
-        PENDING, CONFIRMED, COMPLETED, CANCELLED
+        PENDING, CONFIRMED, IN_CONSULTATION, COMPLETED, CANCELLED
     }
 }
-

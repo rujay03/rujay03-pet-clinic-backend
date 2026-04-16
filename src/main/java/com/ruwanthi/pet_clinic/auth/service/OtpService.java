@@ -4,6 +4,8 @@ import com.ruwanthi.pet_clinic.auth.entity.OtpVerification;
 import com.ruwanthi.pet_clinic.auth.repo.OtpVerificationRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,7 @@ import java.util.Random;
 @Service
 public class OtpService {
 
+    private static final Logger logger = LoggerFactory.getLogger(OtpService.class);
     private static final int OTP_EXPIRY_MINUTES = 10;
     private static final int MAX_ATTEMPTS = 5;
 
@@ -22,7 +25,8 @@ public class OtpService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public OtpService(OtpVerificationRepository otpRepository, EmailService emailService) {
+    public OtpService(OtpVerificationRepository otpRepository,
+                      EmailService emailService) {
         this.otpRepository = otpRepository;
         this.emailService = emailService;
     }
@@ -50,8 +54,39 @@ public class OtpService {
 
         otpRepository.save(otp);
 
-        // Send OTP via email
-        emailService.sendOtp(email, otpCode);
+        // Never block signup on SMTP transport problems.
+        try {
+            emailService.sendOtp(email, otpCode);
+        } catch (Exception ex) {
+            logger.warn("OTP mail failed for {}. Continuing signup flow. OTP: {}", email, otpCode, ex);
+        }
+    }
+
+    /**
+     * Generate and send OTP to email for password reset
+     */
+    @Transactional
+    public void generateAndSendPasswordResetOtp(String email) {
+        String otpCode = generateOtpCode();
+
+        otpRepository.deleteByEmail(email);
+        entityManager.flush();
+
+        OtpVerification otp = OtpVerification.builder()
+                .email(email)
+                .otpCode(otpCode)
+                .expiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
+                .verified(false)
+                .attempts(0)
+                .build();
+
+        otpRepository.save(otp);
+
+        try {
+            emailService.sendPasswordResetOtp(email, otpCode);
+        } catch (Exception ex) {
+            logger.warn("Password reset OTP mail failed for {}. Continuing flow. OTP: {}", email, otpCode, ex);
+        }
     }
 
     /**
@@ -120,4 +155,3 @@ public class OtpService {
         return String.valueOf(otp);
     }
 }
-
