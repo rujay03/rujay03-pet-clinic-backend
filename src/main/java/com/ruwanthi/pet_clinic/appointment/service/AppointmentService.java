@@ -7,6 +7,7 @@ import com.ruwanthi.pet_clinic.appointment.dto.DoctorAppointmentPageResponse;
 import com.ruwanthi.pet_clinic.appointment.dto.UpdateDoctorAppointmentRequest;
 import com.ruwanthi.pet_clinic.appointment.entity.Appointment;
 import com.ruwanthi.pet_clinic.appointment.repo.AppointmentRepository;
+import com.ruwanthi.pet_clinic.appointment.repo.AppointmentTypeCatalogRepository;
 import com.ruwanthi.pet_clinic.owner.entity.Owner;
 import com.ruwanthi.pet_clinic.owner.repo.OwnerRepository;
 import com.ruwanthi.pet_clinic.pet.entity.Pet;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -39,17 +39,20 @@ public class AppointmentService {
     private final PetRepository petRepository;
     private final StaffRepository staffRepository;
     private final ScheduleService scheduleService;
+    private final AppointmentTypeCatalogRepository appointmentTypeCatalogRepository;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               OwnerRepository ownerRepository,
                               PetRepository petRepository,
                               StaffRepository staffRepository,
-                              ScheduleService scheduleService) {
+                              ScheduleService scheduleService,
+                              AppointmentTypeCatalogRepository appointmentTypeCatalogRepository) {
         this.appointmentRepository = appointmentRepository;
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.staffRepository = staffRepository;
         this.scheduleService = scheduleService;
+        this.appointmentTypeCatalogRepository = appointmentTypeCatalogRepository;
     }
 
     @Transactional
@@ -64,13 +67,17 @@ public class AppointmentService {
         Staff doctor = staffRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found"));
         scheduleService.ensureSlotAvailable(doctor.getId(), request.getAppointmentDate(), request.getAppointmentTime());
+
+        String appointmentType = request.getAppointmentType().trim();
+        validateAppointmentType(appointmentType);
+
         Appointment appointment = Appointment.builder()
                 .owner(owner)
                 .pet(pet)
                 .staff(doctor)
                 .appointmentDate(request.getAppointmentDate())
                 .appointmentTime(request.getAppointmentTime())
-                .appointmentType(request.getAppointmentType())
+                .appointmentType(appointmentType)
                 .notes(request.getNotes())
                 .status(Appointment.AppointmentStatus.PENDING)
                 .build();
@@ -231,9 +238,12 @@ public class AppointmentService {
 
         scheduleService.ensureSlotAvailable(doctor.getId(), request.getAppointmentDate(), request.getAppointmentTime(), appointment.getId());
 
+        String appointmentType = request.getAppointmentType().trim();
+        validateAppointmentType(appointmentType);
+
         appointment.setAppointmentDate(request.getAppointmentDate());
         appointment.setAppointmentTime(request.getAppointmentTime());
-        appointment.setAppointmentType(request.getAppointmentType().trim());
+        appointment.setAppointmentType(appointmentType);
         appointment.setNotes(request.getNotes());
 
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
@@ -323,5 +333,14 @@ public class AppointmentService {
             case COMPLETED -> "Completed";
             case CANCELLED -> "Cancelled";
         };
+    }
+
+    private void validateAppointmentType(String appointmentType) {
+        if (appointmentType.isBlank()) {
+            throw new IllegalArgumentException("Appointment type is required");
+        }
+        if (!appointmentTypeCatalogRepository.existsByTypeNameIgnoreCaseAndActiveTrue(appointmentType)) {
+            throw new IllegalArgumentException("Invalid appointment type");
+        }
     }
 }

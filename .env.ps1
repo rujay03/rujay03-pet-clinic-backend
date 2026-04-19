@@ -1,0 +1,5 @@
+$env:MAIL_HOST="smtp.gmail.com"
+$env:MAIL_PORT="587"
+$env:MAIL_USERNAME="petcore26@gmail.com"
+$env:MAIL_PASSWORD="zgfqtnqzpdcpbblx"
+$env:MAIL_PROTOCOL="smtp"

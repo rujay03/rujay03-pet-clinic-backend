@@ -1,5 +1,6 @@
 package com.ruwanthi.pet_clinic.medical.service;
 
+import com.ruwanthi.pet_clinic.auth.service.EmailService;
 import com.ruwanthi.pet_clinic.medical.dto.CreatePrescriptionItemRequest;
 import com.ruwanthi.pet_clinic.medical.dto.CreatePrescriptionRequest;
 import com.ruwanthi.pet_clinic.medical.dto.CreateVaccinationRequest;
@@ -14,11 +15,15 @@ import com.ruwanthi.pet_clinic.medical.entity.Vaccination;
 import com.ruwanthi.pet_clinic.medical.repo.MedicineRepository;
 import com.ruwanthi.pet_clinic.medical.repo.PrescriptionRepository;
 import com.ruwanthi.pet_clinic.medical.repo.VaccinationRepository;
+import com.ruwanthi.pet_clinic.owner.entity.Owner;
+import com.ruwanthi.pet_clinic.owner.repo.OwnerRepository;
 import com.ruwanthi.pet_clinic.pet.entity.Pet;
 import com.ruwanthi.pet_clinic.pet.repo.PetRepository;
 import com.ruwanthi.pet_clinic.staff.entity.Staff;
 import com.ruwanthi.pet_clinic.staff.repo.StaffRepository;
 import com.ruwanthi.pet_clinic.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,30 +33,42 @@ import java.util.List;
 @Service
 public class PetMedicalRecordService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PetMedicalRecordService.class);
+
     private final VaccinationRepository vaccinationRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final PetRepository petRepository;
     private final StaffRepository staffRepository;
     private final MedicineRepository medicineRepository;
+    private final OwnerRepository ownerRepository;
+    private final EmailService emailService;
 
     public PetMedicalRecordService(
             VaccinationRepository vaccinationRepository,
             PrescriptionRepository prescriptionRepository,
             PetRepository petRepository,
             StaffRepository staffRepository,
-            MedicineRepository medicineRepository
+            MedicineRepository medicineRepository,
+            OwnerRepository ownerRepository,
+            EmailService emailService
     ) {
         this.vaccinationRepository = vaccinationRepository;
         this.prescriptionRepository = prescriptionRepository;
         this.petRepository = petRepository;
         this.staffRepository = staffRepository;
         this.medicineRepository = medicineRepository;
+        this.ownerRepository = ownerRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
     public VaccinationResponse createVaccination(Long petId, CreateVaccinationRequest request, User user) {
         Staff doctor = requireDoctorStaff(user);
-        Pet pet = getPet(petId);
+        Pet pet = getPetWithOwnerAndUser(petId);
+
+        if (request.getValidUntil() != null && request.getValidUntil().isBefore(request.getGivenAt().toLocalDate())) {
+            throw new IllegalArgumentException("Valid until date cannot be before given date");
+        }
 
         Vaccination vaccination = Vaccination.builder()
                 .pet(pet)
@@ -62,13 +79,15 @@ public class PetMedicalRecordService {
                 .notes(blankToNull(request.getNotes()))
                 .build();
 
-        return toVaccinationResponse(vaccinationRepository.save(vaccination));
+        Vaccination savedVaccination = vaccinationRepository.save(vaccination);
+        notifyOwnerVaccinationRecorded(savedVaccination, pet, doctor);
+        return toVaccinationResponse(savedVaccination);
     }
 
     @Transactional(readOnly = true)
     public List<VaccinationResponse> listVaccinations(Long petId, User user) {
-        requireDoctorStaff(user);
-        getPet(petId);
+        Pet pet = getPet(petId);
+        requireMedicalRecordReadAccess(user, pet);
         return vaccinationRepository.findByPetIdOrderByGivenAtDesc(petId)
                 .stream()
                 .map(this::toVaccinationResponse)
@@ -99,8 +118,8 @@ public class PetMedicalRecordService {
 
     @Transactional(readOnly = true)
     public List<PrescriptionResponse> listPrescriptions(Long petId, User user) {
-        requireDoctorStaff(user);
-        getPet(petId);
+        Pet pet = getPet(petId);
+        requireMedicalRecordReadAccess(user, pet);
         return prescriptionRepository.findByPetIdWithItemsOrderByPrescribedAtDesc(petId)
                 .stream()
                 .map(this::toPrescriptionResponse)
@@ -144,9 +163,13 @@ public class PetMedicalRecordService {
                 .orElseThrow(() -> new IllegalArgumentException("Pet not found"));
     }
 
+    private Pet getPetWithOwnerAndUser(Long petId) {
+        return petRepository.findWithOwnerAndUserById(petId)
+                .orElseThrow(() -> new IllegalArgumentException("Pet not found"));
+    }
+
     private Staff requireDoctorStaff(User user) {
-        boolean doctorOrAdmin = user.getRoles().stream()
-                .anyMatch((role) -> "DOCTOR".equalsIgnoreCase(role.getName()) || "ADMIN".equalsIgnoreCase(role.getName()));
+        boolean doctorOrAdmin = hasAnyRole(user, "DOCTOR", "ADMIN");
 
         if (!doctorOrAdmin) {
             throw new SecurityException("Only doctors can manage medical records");
@@ -154,6 +177,30 @@ public class PetMedicalRecordService {
 
         return staffRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Doctor profile not found"));
+    }
+
+    private void requireMedicalRecordReadAccess(User user, Pet pet) {
+        if (hasAnyRole(user, "DOCTOR", "ADMIN")) {
+            return;
+        }
+
+        if (hasAnyRole(user, "PETOWNER")) {
+            Owner owner = ownerRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new SecurityException("Owner profile not found"));
+
+            if (pet.getOwner().getId().equals(owner.getId())) {
+                return;
+            }
+        }
+
+        throw new SecurityException("You don't have permission to view these medical records");
+    }
+
+    private boolean hasAnyRole(User user, String... allowedRoles) {
+        return user.getRoles().stream()
+                .map((role) -> role.getName().toUpperCase())
+                .anyMatch((name) -> java.util.Arrays.stream(allowedRoles)
+                        .anyMatch((allowedRole) -> allowedRole.equalsIgnoreCase(name)));
     }
 
     private VaccinationResponse toVaccinationResponse(Vaccination vaccination) {
@@ -203,5 +250,44 @@ public class PetMedicalRecordService {
             return null;
         }
         return value.trim();
+    }
+
+    private void notifyOwnerVaccinationRecorded(Vaccination vaccination, Pet pet, Staff doctor) {
+        String ownerEmail = pet.getOwner() != null
+                && pet.getOwner().getUser() != null
+                ? pet.getOwner().getUser().getEmail()
+                : null;
+
+        if (ownerEmail == null || ownerEmail.isBlank()) {
+            Long ownerId = pet.getOwner() != null ? pet.getOwner().getId() : null;
+            logger.warn(
+                    "Vaccination {} created for pet {} but owner email is missing (ownerId={})",
+                    vaccination.getId(),
+                    pet.getId(),
+                    ownerId
+            );
+            return;
+        }
+
+        logger.info(
+                "Sending vaccination-created email for vaccination {} to {}",
+                vaccination.getId(),
+                ownerEmail
+        );
+
+        boolean sent = emailService.sendVaccinationRecordedEmail(
+                ownerEmail,
+                pet.getOwner().getFullName(),
+                pet.getName(),
+                vaccination.getVaccineName(),
+                vaccination.getGivenAt(),
+                vaccination.getValidUntil(),
+                vaccination.getNotes(),
+                doctor.getFullName()
+        );
+
+        if (!sent) {
+            logger.warn("Failed to send vaccination-created email for vaccination {} to {}", vaccination.getId(), ownerEmail);
+        }
     }
 }

@@ -32,7 +32,8 @@ spring:
       timeout: 60000   # 60 seconds
 
   session:
-    store-type: redis
+    # Use container-managed HTTP session in local dev; Redis is optional.
+    store-type: none
     data:
       redis:
         namespace: petclinic:sessions
@@ -40,25 +41,24 @@ spring:
         save-mode: on_set_attribute
 
   mail:
-    host: mail.hdrlabs.dev
-    port: 465
-    username: splitmatesupport@hdrlabs.dev
-    password: V-%(2LnCatqG2~Y2
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
     properties:
       mail:
         smtp:
           auth: true
-          ssl:
+          starttls:
             enable: true
-          socketFactory:
-            port: 465
-            class: javax.net.ssl.SSLSocketFactory
-            fallback: false
-    protocol: smtps
 
 app:
   mail:
-    mock-enabled: true
+    mock-enabled: false
     fail-on-error: false
+  vaccination-reminders:
+    enabled: true
+    cron: "0 0 9 * * *"
   upload:
     dir: uploads/pet-images

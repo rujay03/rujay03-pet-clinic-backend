@@ -7,6 +7,7 @@ import com.ruwanthi.pet_clinic.pet.service.PetImageService;
 import com.ruwanthi.pet_clinic.pet.service.PetService;
 import com.ruwanthi.pet_clinic.user.entity.User;
 import com.ruwanthi.pet_clinic.user.repo.UserRepository;
+import com.ruwanthi.pet_clinic.pet.repo.PetTypeCatalogRepository;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
@@ -31,12 +32,15 @@ public class PetController {
     private final PetService petService;
     private final PetImageService petImageService;
     private final UserRepository userRepository;
+    private final PetTypeCatalogRepository petTypeCatalogRepository;
 
     public PetController(PetService petService, PetImageService petImageService,
-                         UserRepository userRepository) {
+                         UserRepository userRepository,
+                         PetTypeCatalogRepository petTypeCatalogRepository) {
         this.petService = petService;
         this.petImageService = petImageService;
         this.userRepository = userRepository;
+        this.petTypeCatalogRepository = petTypeCatalogRepository;
     }
 
     /**
@@ -232,6 +236,19 @@ public class PetController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to create pet"));
         }
+    }
+
+    /**
+     * Get active pet species catalog for authenticated users
+     */
+    @GetMapping("/species")
+    public ResponseEntity<List<String>> getPetSpeciesCatalog() {
+        getCurrentUser();
+        List<String> species = petTypeCatalogRepository.findByActiveTrueOrderByTypeNameAsc().stream()
+                .map(type -> type.getTypeName() == null ? "" : type.getTypeName().trim())
+                .filter(name -> !name.isBlank())
+                .toList();
+        return ResponseEntity.ok(species);
     }
 
     /**

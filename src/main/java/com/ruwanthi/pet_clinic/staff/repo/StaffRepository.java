@@ -12,5 +12,7 @@ public interface StaffRepository extends JpaRepository<Staff, Long> {
 
     boolean existsByContactNo(String contactNo);
 
+    Optional<Staff> findByContactNo(String contactNo);
+
     List<Staff> findByActiveTrueOrderByFullNameAsc();
 }

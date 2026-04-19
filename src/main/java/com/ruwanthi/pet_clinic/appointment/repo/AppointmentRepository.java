@@ -9,9 +9,15 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long>, JpaSpecificationExecutor<Appointment> {
+
+    interface AppointmentTypeCountProjection {
+        String getAppointmentType();
+        Long getCount();
+    }
 
     @Query("SELECT a FROM Appointment a " +
            "JOIN FETCH a.pet p " +
@@ -49,4 +55,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long>,
            "WHERE a.appointmentDate = :appointmentDate " +
            "ORDER BY a.appointmentTime ASC")
     List<Appointment> findByAppointmentDateWithDetails(@Param("appointmentDate") LocalDate appointmentDate);
+
+    @Query("SELECT a.appointmentType as appointmentType, COUNT(a.id) as count " +
+           "FROM Appointment a " +
+           "WHERE a.appointmentType IS NOT NULL AND TRIM(a.appointmentType) <> '' " +
+           "GROUP BY a.appointmentType")
+    List<AppointmentTypeCountProjection> countByAppointmentType();
 }

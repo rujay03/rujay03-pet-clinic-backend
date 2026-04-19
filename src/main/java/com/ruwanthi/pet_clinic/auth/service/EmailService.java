@@ -7,6 +7,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 /**
  * Email service for sending OTP codes
  */
@@ -104,6 +107,104 @@ public class EmailService {
             logger.info("Password reset OTP email sent to: {}", email);
         } catch (Exception e) {
             logger.warn("Failed to send password reset OTP email to {}. Continuing flow. OTP: {}", email, otpCode, e);
+        }
+    }
+
+    /**
+     * Send vaccination validity reminder email.
+     *
+     * @return true when email was sent (or mock-logged), false on delivery failure
+     */
+    public boolean sendVaccinationValidityReminder(String email,
+                                                   String petName,
+                                                   String vaccineName,
+                                                   LocalDate validUntil,
+                                                   String reminderLabel) {
+        if (mockEnabled) {
+            logger.info(
+                    "Mail mock mode enabled. Vaccination reminder for {}: pet='{}', vaccine='{}', validUntil={}, window={}",
+                    email,
+                    petName,
+                    vaccineName,
+                    validUntil,
+                    reminderLabel
+            );
+            return true;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromAddress);
+            message.setTo(email);
+            message.setSubject("Pet Clinic - Vaccination Validity Reminder");
+            message.setText("Dear Pet Owner,\n\n"
+                    + "This is a reminder that one of your pet vaccinations is nearing expiry (" + reminderLabel + ").\n\n"
+                    + "Pet name: " + petName + "\n"
+                    + "Vaccination name: " + vaccineName + "\n"
+                    + "Valid until: " + validUntil + "\n\n"
+                    + "Please contact the clinic to schedule the next dose if needed.\n\n"
+                    + "Thank you,\nPet Clinic Team");
+
+            mailSender.send(message);
+            logger.info("Vaccination reminder email sent to: {}", email);
+            return true;
+        } catch (Exception e) {
+            logger.warn("Failed to send vaccination reminder email to {}", email, e);
+            return false;
+        }
+    }
+
+    /**
+     * Send owner notification email when a vaccination record is created.
+     *
+     * @return true when email was sent (or mock-logged), false on delivery failure
+     */
+    public boolean sendVaccinationRecordedEmail(String email,
+                                                String ownerName,
+                                                String petName,
+                                                String vaccineName,
+                                                LocalDateTime givenAt,
+                                                LocalDate validUntil,
+                                                String notes,
+                                                String doctorName) {
+        if (mockEnabled) {
+            logger.info(
+                    "Mail mock mode enabled. Vaccination recorded for {}: pet='{}', vaccine='{}', givenAt={}, validUntil={}",
+                    email,
+                    petName,
+                    vaccineName,
+                    givenAt,
+                    validUntil
+            );
+            return true;
+        }
+
+        try {
+            String salutation = ownerName != null && !ownerName.isBlank() ? ownerName : "Pet Owner";
+            String validityLine = validUntil != null ? validUntil.toString() : "Not specified";
+            String notesLine = notes != null && !notes.isBlank() ? notes.trim() : "No additional notes";
+            String recordedBy = doctorName != null && !doctorName.isBlank() ? doctorName : "Attending doctor";
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromAddress);
+            message.setTo(email);
+            message.setSubject("Pet Clinic - Vaccination Recorded");
+            message.setText("Dear " + salutation + ",\n\n"
+                    + "A new vaccination has been recorded for your pet.\n\n"
+                    + "Pet name: " + petName + "\n"
+                    + "Vaccination name: " + vaccineName + "\n"
+                    + "Given at: " + givenAt + "\n"
+                    + "Valid until: " + validityLine + "\n"
+                    + "Recorded by: " + recordedBy + "\n"
+                    + "Notes: " + notesLine + "\n\n"
+                    + "Thank you,\nPet Clinic Team");
+
+            mailSender.send(message);
+            logger.info("Vaccination recorded email sent to: {}", email);
+            return true;
+        } catch (Exception e) {
+            logger.warn("Failed to send vaccination recorded email to {}", email, e);
+            return false;
         }
     }
 }

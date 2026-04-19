@@ -1,6 +1,7 @@
 package com.ruwanthi.pet_clinic.user.repo;
 
 import com.ruwanthi.pet_clinic.user.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -15,4 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countDistinctByRoles_Name(String roleName);
 
     List<User> findTop6ByOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = "roles")
+    List<User> findAllByOrderByCreatedAtDesc();
 }

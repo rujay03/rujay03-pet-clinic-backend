@@ -8,9 +8,16 @@ import com.ruwanthi.pet_clinic.auth.dto.ResendOtpRequest;
 import com.ruwanthi.pet_clinic.auth.dto.ResetPasswordRequest;
 import com.ruwanthi.pet_clinic.auth.dto.SignupRequest;
 import com.ruwanthi.pet_clinic.auth.dto.StaffSignupRequest;
+import com.ruwanthi.pet_clinic.auth.dto.UpdateMyProfileRequest;
 import com.ruwanthi.pet_clinic.auth.dto.VerifyOtpRequest;
 import com.ruwanthi.pet_clinic.auth.service.AuthService;
 import com.ruwanthi.pet_clinic.auth.service.OtpService;
+import com.ruwanthi.pet_clinic.owner.entity.Owner;
+import com.ruwanthi.pet_clinic.owner.repo.OwnerRepository;
+import com.ruwanthi.pet_clinic.staff.entity.Staff;
+import com.ruwanthi.pet_clinic.staff.repo.StaffRepository;
+import com.ruwanthi.pet_clinic.user.entity.User;
+import com.ruwanthi.pet_clinic.user.repo.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -35,13 +42,22 @@ public class AuthController {
     private final AuthService authService;
     private final SecurityContextRepository securityContextRepository;
     private final OtpService otpService;
+    private final UserRepository userRepository;
+    private final OwnerRepository ownerRepository;
+    private final StaffRepository staffRepository;
 
     public AuthController(AuthService authService,
                           SecurityContextRepository securityContextRepository,
-                          OtpService otpService) {
+                          OtpService otpService,
+                          UserRepository userRepository,
+                          OwnerRepository ownerRepository,
+                          StaffRepository staffRepository) {
         this.authService = authService;
         this.securityContextRepository = securityContextRepository;
         this.otpService = otpService;
+        this.userRepository = userRepository;
+        this.ownerRepository = ownerRepository;
+        this.staffRepository = staffRepository;
     }
 
     @PostMapping("/signup")
@@ -152,14 +168,23 @@ public class AuthController {
             return ResponseEntity.status(401).body("Not authenticated");
         }
 
-        String email = auth.getName();
-        Set<String> roles = auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(a -> a != null && a.startsWith("ROLE_"))   // keep only real roles
-                .collect(Collectors.toSet());
+        return ResponseEntity.ok(buildMeResponse(auth.getName()));
+    }
 
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMyProfile(Authentication auth,
+                                             @Valid @RequestBody UpdateMyProfileRequest request) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
 
-        return ResponseEntity.ok(new MeResponse(email, roles));
+        try {
+            String email = auth.getName();
+            authService.updateMyProfile(email, request);
+            return ResponseEntity.ok(buildMeResponse(email));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/login")
@@ -226,6 +251,38 @@ public class AuthController {
 
     private boolean isOtpMailTransportFailure(Exception e) {
         return e.getMessage() != null && e.getMessage().contains(OTP_MAIL_FAILURE_MSG);
+    }
+
+    private MeResponse buildMeResponse(String email) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Set<String> roles = auth == null
+                ? Set.of()
+                : auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(a -> a != null && a.startsWith("ROLE_"))
+                .collect(Collectors.toSet());
+
+        String fullName = null;
+        String contactNo = null;
+        String address = null;
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null) {
+            Owner owner = ownerRepository.findByUserId(user.getId()).orElse(null);
+            if (owner != null) {
+                fullName = owner.getFullName();
+                contactNo = owner.getContactNo();
+                address = owner.getAddress();
+            } else {
+                Staff staff = staffRepository.findByUserId(user.getId()).orElse(null);
+                if (staff != null) {
+                    fullName = staff.getFullName();
+                    contactNo = staff.getContactNo();
+                }
+            }
+        }
+
+        return new MeResponse(email, roles, fullName, contactNo, address);
     }
 
 

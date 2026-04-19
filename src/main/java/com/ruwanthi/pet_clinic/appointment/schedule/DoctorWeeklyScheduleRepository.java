@@ -8,5 +8,8 @@ import java.util.List;
 public interface DoctorWeeklyScheduleRepository extends JpaRepository<DoctorWeeklySchedule, Long> {
     List<DoctorWeeklySchedule> findByDoctorIdAndDayOfWeekAndActiveTrue(Long doctorId, DayOfWeek dayOfWeek);
     List<DoctorWeeklySchedule> findByDoctorIsNullAndDayOfWeekAndActiveTrue(DayOfWeek dayOfWeek);
-}
 
+    List<DoctorWeeklySchedule> findByDoctorIdAndActiveTrueOrderByDayOfWeekAscSlotStartAsc(Long doctorId);
+
+    List<DoctorWeeklySchedule> findByDoctorIsNullAndActiveTrueOrderByDayOfWeekAscSlotStartAsc();
+}

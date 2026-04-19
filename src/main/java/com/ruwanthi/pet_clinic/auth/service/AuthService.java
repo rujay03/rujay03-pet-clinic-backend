@@ -3,6 +3,7 @@ package com.ruwanthi.pet_clinic.auth.service;
 import com.ruwanthi.pet_clinic.auth.dto.PetOwnerSignupRequest;
 import com.ruwanthi.pet_clinic.auth.dto.SignupRequest;
 import com.ruwanthi.pet_clinic.auth.dto.StaffSignupRequest;
+import com.ruwanthi.pet_clinic.auth.dto.UpdateMyProfileRequest;
 import com.ruwanthi.pet_clinic.owner.entity.Owner;
 import com.ruwanthi.pet_clinic.owner.repo.OwnerRepository;
 import com.ruwanthi.pet_clinic.staff.entity.Staff;
@@ -235,6 +236,54 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         otpService.deleteOtp(email);
+    }
+
+    @Transactional
+    public void updateMyProfile(String email, UpdateMyProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        String normalizedFullName = request.getFullName().trim();
+        String normalizedContactNo = request.getContactNo() == null ? null : request.getContactNo().trim();
+        String normalizedAddress = request.getAddress() == null ? null : request.getAddress().trim();
+
+        Owner owner = ownerRepository.findByUserId(user.getId()).orElse(null);
+        if (owner != null) {
+            if (normalizedContactNo == null || normalizedContactNo.isEmpty()) {
+                throw new IllegalArgumentException("Contact number is required");
+            }
+
+            ownerRepository.findByContactNo(normalizedContactNo)
+                    .filter(existing -> !existing.getId().equals(owner.getId()))
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Contact number already in use");
+                    });
+
+            owner.setFullName(normalizedFullName);
+            owner.setContactNo(normalizedContactNo);
+            owner.setAddress((normalizedAddress == null || normalizedAddress.isEmpty()) ? null : normalizedAddress);
+            ownerRepository.save(owner);
+            return;
+        }
+
+        Staff staff = staffRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Profile update is unavailable for this account"));
+
+        String normalizedStaffContact = (normalizedContactNo == null || normalizedContactNo.isEmpty())
+                ? null
+                : normalizedContactNo;
+
+        if (normalizedStaffContact != null) {
+            staffRepository.findByContactNo(normalizedStaffContact)
+                    .filter(existing -> !existing.getId().equals(staff.getId()))
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Contact number already in use");
+                    });
+        }
+
+        staff.setFullName(normalizedFullName);
+        staff.setContactNo(normalizedStaffContact);
+        staffRepository.save(staff);
     }
 
 }
