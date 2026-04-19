@@ -178,8 +178,6 @@ CREATE TABLE medicine (
                           generic_name    VARCHAR(150),
                           form            VARCHAR(60),      -- tablet/syrup/etc.
                           strength        VARCHAR(60),      -- e.g., 250mg
-                          unit            VARCHAR(30),      -- e.g., ml, tab
-                          reorder_level   INT NOT NULL DEFAULT 0,
                           is_active       TINYINT(1) NOT NULL DEFAULT 1,
                           CONSTRAINT uq_medicine_name UNIQUE (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -23,7 +23,15 @@ public class Medicine {
     @Column(nullable = false, length = 150)
     private String name;
 
+    @Column(name = "generic_name", length = 150)
+    private String genericName;
+
+    @Column(name = "form", length = 60)
+    private String form;
+
+    @Column(name = "strength", length = 60)
+    private String strength;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 }
-

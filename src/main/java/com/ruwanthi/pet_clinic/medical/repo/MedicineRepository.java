@@ -8,10 +8,15 @@ import java.util.Optional;
 
 public interface MedicineRepository extends JpaRepository<Medicine, Long> {
 
+    List<Medicine> findAllByOrderByIdDesc();
+
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
     List<Medicine> findTop20ByIsActiveTrueOrderByNameAsc();
 
     List<Medicine> findTop20ByIsActiveTrueAndNameContainingIgnoreCaseOrderByNameAsc(String name);
 
     Optional<Medicine> findByIdAndIsActiveTrue(Long id);
 }
-
