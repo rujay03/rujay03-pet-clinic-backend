@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,4 +41,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long>,
            "WHERE a.staff.id = :staffId " +
            "ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
     List<Appointment> findByStaffIdWithDetailsOrderByDateAsc(@Param("staffId") Long staffId);
+
+    @Query("SELECT a FROM Appointment a " +
+           "JOIN FETCH a.owner o " +
+           "JOIN FETCH a.pet p " +
+           "LEFT JOIN FETCH a.staff s " +
+           "WHERE a.appointmentDate = :appointmentDate " +
+           "ORDER BY a.appointmentTime ASC")
+    List<Appointment> findByAppointmentDateWithDetails(@Param("appointmentDate") LocalDate appointmentDate);
 }

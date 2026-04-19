@@ -1,6 +1,5 @@
 package com.ruwanthi.pet_clinic.user.entity;
 
-import com.ruwanthi.pet_clinic.user.entity.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "petclinic")
 @Getter
 @Setter
 @NoArgsConstructor
