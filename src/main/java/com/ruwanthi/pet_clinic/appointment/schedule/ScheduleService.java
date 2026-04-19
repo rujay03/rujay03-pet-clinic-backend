@@ -38,6 +38,11 @@ public class ScheduleService {
 
     @Transactional(readOnly = true)
     public List<TimeSlotDto> getAvailableSlots(Long doctorId, LocalDate date) {
+        return getAvailableSlots(doctorId, date, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TimeSlotDto> getAvailableSlots(Long doctorId, LocalDate date, Long excludeAppointmentId) {
         Staff doctor = staffRepository.findById(doctorId)
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found"));
 
@@ -66,8 +71,11 @@ public class ScheduleService {
         }
 
         // Remove already booked slots for this doctor and date
-        var booked = appointmentRepository.findByStaffIdAndAppointmentDateAndStatusNot(
-                doctor.getId(), date, Appointment.AppointmentStatus.CANCELLED);
+        var booked = excludeAppointmentId == null
+                ? appointmentRepository.findByStaffIdAndAppointmentDateAndStatusNot(
+                        doctor.getId(), date, Appointment.AppointmentStatus.CANCELLED)
+                : appointmentRepository.findByStaffIdAndAppointmentDateAndStatusNotAndIdNot(
+                        doctor.getId(), date, Appointment.AppointmentStatus.CANCELLED, excludeAppointmentId);
         Map<LocalTime, Appointment> bookedByStart = booked.stream()
                 .collect(Collectors.toMap(Appointment::getAppointmentTime, a -> a, (a, b) -> a));
 
@@ -79,7 +87,12 @@ public class ScheduleService {
 
     @Transactional(readOnly = true)
     public void ensureSlotAvailable(Long doctorId, LocalDate date, LocalTime slotStart) {
-        boolean available = getAvailableSlots(doctorId, date).stream()
+        ensureSlotAvailable(doctorId, date, slotStart, null);
+    }
+
+    @Transactional(readOnly = true)
+    public void ensureSlotAvailable(Long doctorId, LocalDate date, LocalTime slotStart, Long excludeAppointmentId) {
+        boolean available = getAvailableSlots(doctorId, date, excludeAppointmentId).stream()
                 .anyMatch(slot -> slot.slotStart().equals(slotStart));
         if (!available) {
             throw new IllegalArgumentException("Selected slot is not available");

@@ -4,6 +4,7 @@ import com.ruwanthi.pet_clinic.appointment.dto.AppointmentResponse;
 import com.ruwanthi.pet_clinic.appointment.dto.CreateAppointmentRequest;
 import com.ruwanthi.pet_clinic.appointment.dto.DoctorAppointmentItemResponse;
 import com.ruwanthi.pet_clinic.appointment.dto.DoctorAppointmentPageResponse;
+import com.ruwanthi.pet_clinic.appointment.dto.UpdateDoctorAppointmentRequest;
 import com.ruwanthi.pet_clinic.appointment.entity.Appointment;
 import com.ruwanthi.pet_clinic.appointment.repo.AppointmentRepository;
 import com.ruwanthi.pet_clinic.owner.entity.Owner;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -194,18 +196,84 @@ public class AppointmentService {
         }
 
         Appointment.AppointmentStatus currentStatus = appointment.getStatus();
-        boolean validTransition =
-                (currentStatus == Appointment.AppointmentStatus.PENDING && newStatus == Appointment.AppointmentStatus.IN_CONSULTATION)
-                        || (currentStatus == Appointment.AppointmentStatus.CONFIRMED && newStatus == Appointment.AppointmentStatus.IN_CONSULTATION)
-                        || (currentStatus == Appointment.AppointmentStatus.IN_CONSULTATION && newStatus == Appointment.AppointmentStatus.COMPLETED);
+        boolean canMarkCompleted =
+                currentStatus == Appointment.AppointmentStatus.PENDING
+                        || currentStatus == Appointment.AppointmentStatus.CONFIRMED
+                        || currentStatus == Appointment.AppointmentStatus.IN_CONSULTATION;
 
-        if (!validTransition) {
-            throw new IllegalArgumentException("Invalid status transition");
+        if (!(canMarkCompleted && newStatus == Appointment.AppointmentStatus.COMPLETED)) {
+            throw new IllegalArgumentException("Only upcoming appointments can be marked as completed");
         }
 
         appointment.setStatus(newStatus);
         appointmentRepository.save(appointment);
         return mapToDoctorAppointmentResponse(appointment);
+    }
+
+    @Transactional(readOnly = true)
+    public DoctorAppointmentItemResponse getDoctorAppointmentById(Long appointmentId, User user) {
+        Staff doctor = staffRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Doctor profile not found"));
+
+        Appointment appointment = appointmentRepository.findByIdAndStaffId(appointmentId, doctor.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        return mapToDoctorAppointmentResponse(appointment);
+    }
+
+    @Transactional
+    public DoctorAppointmentItemResponse updateDoctorAppointment(Long appointmentId, UpdateDoctorAppointmentRequest request, User user) {
+        Staff doctor = staffRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Doctor profile not found"));
+
+        Appointment appointment = appointmentRepository.findByIdAndStaffId(appointmentId, doctor.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        scheduleService.ensureSlotAvailable(doctor.getId(), request.getAppointmentDate(), request.getAppointmentTime(), appointment.getId());
+
+        appointment.setAppointmentDate(request.getAppointmentDate());
+        appointment.setAppointmentTime(request.getAppointmentTime());
+        appointment.setAppointmentType(request.getAppointmentType().trim());
+        appointment.setNotes(request.getNotes());
+
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            Appointment.AppointmentStatus requestedStatus;
+            try {
+                requestedStatus = Appointment.AppointmentStatus.valueOf(request.getStatus().trim().toUpperCase(Locale.ROOT));
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid status");
+            }
+
+            if (requestedStatus == Appointment.AppointmentStatus.IN_CONSULTATION) {
+                throw new IllegalArgumentException("Status must be Upcoming, Completed, or Cancelled");
+            }
+
+            if (requestedStatus == Appointment.AppointmentStatus.PENDING ||
+                    requestedStatus == Appointment.AppointmentStatus.CONFIRMED) {
+                appointment.setStatus(Appointment.AppointmentStatus.PENDING);
+            } else {
+                appointment.setStatus(requestedStatus);
+            }
+        }
+
+        appointmentRepository.save(appointment);
+        return mapToDoctorAppointmentResponse(appointment);
+    }
+
+    @Transactional
+    public void deleteDoctorAppointment(Long appointmentId, User user) {
+        Staff doctor = staffRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Doctor profile not found"));
+
+        Appointment appointment = appointmentRepository.findByIdAndStaffId(appointmentId, doctor.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        if (appointment.getStatus() == Appointment.AppointmentStatus.IN_CONSULTATION ||
+                appointment.getStatus() == Appointment.AppointmentStatus.COMPLETED) {
+            throw new IllegalArgumentException("Cannot delete appointments in consultation or completed state");
+        }
+
+        appointmentRepository.delete(appointment);
     }
 
     private AppointmentResponse mapToResponse(Appointment a) {
@@ -226,19 +294,22 @@ public class AppointmentService {
 
     private DoctorAppointmentItemResponse mapToDoctorAppointmentResponse(Appointment a) {
         String uiStatus = switch (a.getStatus()) {
-            case PENDING, CONFIRMED -> a.getAppointmentDate().isEqual(LocalDate.now()) ? "Waiting" : "Upcoming";
-            case IN_CONSULTATION -> "In Consultation";
+            case PENDING, CONFIRMED, IN_CONSULTATION -> "Upcoming";
             case COMPLETED -> "Completed";
             case CANCELLED -> "Cancelled";
         };
 
         return new DoctorAppointmentItemResponse(
                 a.getId(),
+                a.getOwner().getId(),
                 a.getOwner().getFullName(),
                 a.getOwner().getContactNo(),
+                a.getPet().getId(),
                 a.getPet().getName(),
                 a.getAppointmentDate(),
                 a.getAppointmentTime(),
+                a.getAppointmentType(),
+                a.getNotes(),
                 uiStatus,
                 a.getStatus().name()
         );

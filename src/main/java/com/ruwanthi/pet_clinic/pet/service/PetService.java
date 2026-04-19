@@ -8,6 +8,7 @@ import com.ruwanthi.pet_clinic.pet.dto.UpdatePetRequest;
 import com.ruwanthi.pet_clinic.pet.entity.Pet;
 import com.ruwanthi.pet_clinic.pet.repo.PetRepository;
 import com.ruwanthi.pet_clinic.user.entity.User;
+import com.ruwanthi.pet_clinic.user.entity.Role;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -175,6 +176,76 @@ public class PetService {
         }
 
         petRepository.delete(pet);
+    }
+
+    /**
+     * Get all pets for a specific owner (doctor/admin views)
+     */
+    @Transactional(readOnly = true)
+    public List<PetResponse> getPetsByOwnerId(Long ownerId) {
+        if (!ownerRepository.existsById(ownerId)) {
+            throw new IllegalArgumentException("Owner not found");
+        }
+
+        return petRepository.findByOwnerId(ownerId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get pet details by pet ID for doctor/admin views
+     */
+    @Transactional(readOnly = true)
+    public PetResponse getPetByIdForDoctor(Long petId) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new IllegalArgumentException("Pet not found"));
+        return mapToResponse(pet);
+    }
+
+    /**
+     * Create a new pet for a selected owner (doctor/admin workflow)
+     */
+    @Transactional
+    public PetResponse createPetForOwner(Long ownerId, CreatePetRequest request, User actor) {
+        requireDoctorOrAdmin(actor);
+
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
+
+        if (petRepository.existsByOwnerIdAndName(owner.getId(), request.getName())) {
+            throw new IllegalArgumentException("This owner already has a pet with this name");
+        }
+
+        Pet.Sex sex;
+        try {
+            sex = Pet.Sex.valueOf(request.getSex().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid sex value. Must be MALE, FEMALE, or UNKNOWN");
+        }
+
+        Pet pet = Pet.builder()
+                .owner(owner)
+                .name(request.getName())
+                .species(request.getSpecies())
+                .breed(request.getBreed())
+                .sex(sex)
+                .dateOfBirth(request.getDateOfBirth())
+                .notes(request.getNotes())
+                .imageUrl(null)
+                .build();
+
+        return mapToResponse(petRepository.save(pet));
+    }
+
+    private void requireDoctorOrAdmin(User user) {
+        boolean allowed = user.getRoles().stream()
+                .map(Role::getName)
+                .anyMatch((name) -> "DOCTOR".equalsIgnoreCase(name) || "ADMIN".equalsIgnoreCase(name));
+
+        if (!allowed) {
+            throw new IllegalArgumentException("Only doctor or admin can add pets for owners");
+        }
     }
 
     /**

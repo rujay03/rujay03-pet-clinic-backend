@@ -57,6 +57,16 @@ public class DoctorScheduleController {
         return ResponseEntity.ok(slots);
     }
 
+    @GetMapping("/my/available-slots")
+    public ResponseEntity<List<TimeSlotDto>> getMyAvailableSlots(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) Long excludeAppointmentId
+    ) {
+        Staff doctor = getCurrentDoctor();
+        var slots = scheduleService.getAvailableSlots(doctor.getId(), date, excludeAppointmentId);
+        return ResponseEntity.ok(slots);
+    }
+
     @GetMapping("/my/slots")
     public ResponseEntity<List<TimeSlotDto>> getMyManagedSlots(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date

@@ -12,3 +12,4 @@ server:
       cookie:
         name: PETCLINICSESSION
         http-only: true
+

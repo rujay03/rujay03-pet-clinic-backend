@@ -7,8 +7,8 @@ import com.ruwanthi.pet_clinic.pet.service.PetImageService;
 import com.ruwanthi.pet_clinic.pet.service.PetService;
 import com.ruwanthi.pet_clinic.user.entity.User;
 import com.ruwanthi.pet_clinic.user.repo.UserRepository;
-import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +66,7 @@ public class PetController {
     public ResponseEntity<Resource> getPetImage(@PathVariable String filename) {
         try {
             Path imagePath = petImageService.getImagePath(filename);
-            Resource resource = new PathResource(imagePath);
+            Resource resource = new UrlResource(imagePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
                 return ResponseEntity.notFound().build();
             }
@@ -189,13 +189,62 @@ public class PetController {
     }
 
     /**
+     * Get all pets for a specific owner (doctor/admin view)
+     */
+    @GetMapping("/owner/{ownerId}")
+    public ResponseEntity<?> getPetsByOwner(@PathVariable Long ownerId) {
+        try {
+            List<PetResponse> pets = petService.getPetsByOwnerId(ownerId);
+            return ResponseEntity.ok(pets);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get pet details by ID for doctor/admin views
+     */
+    @GetMapping("/details/{petId}")
+    public ResponseEntity<?> getPetDetailsForDoctor(@PathVariable Long petId) {
+        try {
+            PetResponse pet = petService.getPetByIdForDoctor(petId);
+            return ResponseEntity.ok(pet);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Create a new pet for a selected owner (doctor/admin view)
+     */
+    @PostMapping("/owner/{ownerId}")
+    public ResponseEntity<?> createPetForOwner(
+            @PathVariable Long ownerId,
+            @RequestBody CreatePetRequest request
+    ) {
+        try {
+            User user = getCurrentUser();
+            PetResponse pet = petService.createPetForOwner(ownerId, request, user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(pet);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to create pet"));
+        }
+    }
+
+    /**
      * Get the currently authenticated user
      */
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new IllegalStateException("Unauthenticated request");
+        }
+
         String email = authentication.getName();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
     }
 }
-
